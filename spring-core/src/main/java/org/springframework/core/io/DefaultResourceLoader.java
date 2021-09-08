@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.lang.Nullable;
@@ -31,6 +32,15 @@ import org.springframework.util.ResourceUtils;
 import org.springframework.util.StringUtils;
 
 /**
+ * 接口{@link ResourceLoader}的默认实现。
+ * *由{@link ResourceEditor}使用，并作为基类
+ * * {@link org.springframework.context.support.AbstractApplicationContext}。
+ * *也可以单独使用。
+ * ＊
+ * * <p>将返回一个{@link UrlResource}如果位置值是一个URL，
+ * *和{@link ClassPathResource}，如果它是一个非url路径或
+ * *”类路径:“pseudo-URL。
+ *
  * Default implementation of the {@link ResourceLoader} interface.
  * Used by {@link ResourceEditor}, and serves as base class for
  * {@link org.springframework.context.support.AbstractApplicationContext}.
@@ -56,6 +66,10 @@ public class DefaultResourceLoader implements ResourceLoader {
 
 
 	/**
+	 * 创建一个新的DefaultResourceLoader。
+	 * * <p>ClassLoader访问将使用线程上下文类装入器发生
+	 * *在这个ResourceLoader的初始化时。
+	 *
 	 * Create a new DefaultResourceLoader.
 	 * <p>ClassLoader access will happen using the thread context class loader
 	 * at the time of this ResourceLoader's initialization.
@@ -66,6 +80,10 @@ public class DefaultResourceLoader implements ResourceLoader {
 	}
 
 	/**
+	 * 创建一个新的DefaultResourceLoader。
+	 * * @param classLoader用于加载类路径资源的classLoader，或者{@code null}
+	 * *用于在实际访问资源时使用线程上下文类装入器
+	 *
 	 * Create a new DefaultResourceLoader.
 	 * @param classLoader the ClassLoader to load class path resources with, or {@code null}
 	 * for using the thread context class loader at the time of actual resource access
@@ -76,6 +94,11 @@ public class DefaultResourceLoader implements ResourceLoader {
 
 
 	/**
+	 * 指定ClassLoader来加载类路径资源，或者{@code null}
+	 * *用于在实际访问资源时使用线程上下文类装入器。
+	 * * <p>默认情况下，ClassLoader访问将使用线程上下文发生
+	 * *类装入器在这个ResourceLoader初始化时。
+	 *
 	 * Specify the ClassLoader to load class path resources with, or {@code null}
 	 * for using the thread context class loader at the time of actual resource access.
 	 * <p>The default is that ClassLoader access will happen using the thread context
@@ -86,6 +109,9 @@ public class DefaultResourceLoader implements ResourceLoader {
 	}
 
 	/**
+	 * 返回装入类路径资源的ClassLoader。
+	 * * <p>将传递给ClassPathResource的所有构造函数
+	 * *由资源加载器创建的ClassPathResource对象。
 	 * Return the ClassLoader to load class path resources with.
 	 * <p>Will get passed to ClassPathResource's constructor for all
 	 * ClassPathResource objects created by this resource loader.
@@ -98,6 +124,10 @@ public class DefaultResourceLoader implements ResourceLoader {
 	}
 
 	/**
+	 * 将给定的解析器注册到此资源加载器，从而允许
+	 * *需要处理的附加协议。
+	 * * <p>任何这样的解析器都会在这个加载器的标准之前被调用
+	 * *解析规则。因此，它也可以覆盖任何默认规则。
 	 * Register the given resolver with this resource loader, allowing for
 	 * additional protocols to be handled.
 	 * <p>Any such resolver will be invoked ahead of this loader's standard
@@ -111,6 +141,8 @@ public class DefaultResourceLoader implements ResourceLoader {
 	}
 
 	/**
+	 * 返回当前注册的协议解析器的集合，
+	 * *允许内省和修改。
 	 * Return the collection of currently registered protocol resolvers,
 	 * allowing for introspection as well as modification.
 	 * @since 4.3
@@ -131,6 +163,7 @@ public class DefaultResourceLoader implements ResourceLoader {
 	}
 
 	/**
+	 * 获取给定值类型的缓存，键值为{@link Resource}。
 	 * Clear all resource caches in this resource loader.
 	 * @since 5.0
 	 * @see #getResourceCache
@@ -139,7 +172,14 @@ public class DefaultResourceLoader implements ResourceLoader {
 		this.resourceCaches.clear();
 	}
 
-
+	/**
+	 * 	若location以/开头，则调用getResourceByPath()构造ClassPathContextResource类型资源并返回
+	 * 	若location以classpath:开头，则构造ClassPathResource类型资源并返回，在构造该资源时，通过getClassLoader()获取当前的ClassLoader
+	 * 	构造URL，尝试通过它进行资源定位，若没有抛出MalformedURLException异常，则判断是否为FileURL，如果是则构造FileUrlResource类型资源，否则构造UrlResource。
+	 * 若在加载过程中抛出MalformedURLException异常，则委派getResourceByPath()
+	 * @param location the resource location
+	 * @return
+	 */
 	@Override
 	public Resource getResource(String location) {
 		Assert.notNull(location, "Location must not be null");

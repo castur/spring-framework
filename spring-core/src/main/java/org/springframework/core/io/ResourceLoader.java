@@ -20,6 +20,18 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.ResourceUtils;
 
 /**
+ * 加载资源的策略接口(例如…类路径或文件系统
+ * *参考资料)。一个{@link org.springframework.context.ApplicationContext}
+ * *需要提供此功能，加上扩展
+ * * {@link org.springframework.core.io.support。ResourcePatternResolver}的支持。
+ * ＊
+ * * <p>{@link DefaultResourceLoader}是一个独立的实现
+ * *可在ApplicationContext外部使用，也可由{@link ResourceEditor}使用。
+ * ＊
+ * * <p>资源类型的Bean属性和资源数组可以被填充
+ * * from string when running in an ApplicationContext, using the
+ * * context的资源加载策略。
+ *
  * Strategy interface for loading resources (e.. class path or file system
  * resources). An {@link org.springframework.context.ApplicationContext}
  * is required to provide this functionality, plus extended
@@ -46,6 +58,18 @@ public interface ResourceLoader {
 
 
 	/**
+	 * 返回指定资源位置的资源句柄。
+	 * * <p>句柄应该是一个可重用的资源描述符，
+	 * *允许多个{@link Resource#getInputStream()}调用。
+	 * * < p > < ul >
+	 * * <li>必须支持完全限定的url，例如:“文件:C: / test.dat”。
+	 * * <li>必须支持类路径伪url，例如:“类路径:test.dat”。
+	 * * <li>应该支持相对文件路径，例如:“web - inf / test.dat”。
+	 * *(这将是特定于实现的，通常由
+	 * * ApplicationContext实现。)
+	 * * < / ul >
+	 * * <p>注意，资源句柄并不意味着现有的资源;
+	 * *你需要调用{@link Resource#exists}来检查是否存在。
 	 * Return a Resource handle for the specified resource location.
 	 * <p>The handle should always be a reusable resource descriptor,
 	 * allowing for multiple {@link Resource#getInputStream()} calls.
@@ -67,6 +91,12 @@ public interface ResourceLoader {
 	Resource getResource(String location);
 
 	/**
+	 * 公开此ResourceLoader使用的ClassLoader。
+	 * * <p>需要直接访问ClassLoader的客户端可以这样做
+	 * *以统一的方式与ResourceLoader，而不是依赖
+	 * *在线程上下文ClassLoader上。
+	 * * @return ClassLoader
+	 * *(只有{@code null}，即使系统ClassLoader是不可访问的)
 	 * Expose the ClassLoader used by this ResourceLoader.
 	 * <p>Clients which need to access the ClassLoader directly can do so
 	 * in a uniform manner with the ResourceLoader, rather than relying
